@@ -1,0 +1,123 @@
+This is my attempt at porting Remora (https://github.com/scottalford75/Remora)
+a free, opensource LinuxCNC component and Programmable Realtime Unit (PRU)
+to stm32f4 (STM32F407vg to be exact that's what I have).
+ 
+Modules Implemented so far:
+	Blinker
+	Reset
+	Stepgen
+	Switch	- not tested
+	Estop		- not tested
+	DigitalPin	- not tested	
+	
+Configuration is sent via serial port @115200 8N1
+
+Enumeration for the type of function
+ ESTOP 			 = 0,
+ STEPGEN, 	 = 1
+ DIGITAL_PIN = 2 
+ RESET_PIN   = 3
+ RC_SERVO		 = 4
+ TEMPERATURE = 5
+ ENCODER		 = 6
+ SWITCH			 = 7
+ BLINKER		 = 8
+ 
+Data Format:
+
+Stepgen data format "#B13,C0C1C2,C3C4C5,C6C7C8"
+	B13 B=BaseThread 1=Type1 3=Number of joints<-MUST HAVE exactly the same number of joints to cofigure
+	C0 PortC StepPin 0
+	C1  PortC DirPin 1
+	C2 PortC EnablePin 2
+	...
+
+Blinker data format "#S8,E0F4"
+	S8 = ServoThread Type8
+	E0 = PortE Pin 0
+	F4 = Frequency of the blink, 	only value is used
+	
+Reset Pin data format "#S3,C15;"
+	S3 ServoThread Type3
+	C15 PortC Pin15
+
+eStop Pin data format "#S0,C12"
+	S0 ServoThread Type 0
+	C12 PortC Pin12
+
+
+Switch data format "#S7,E0F4"
+	S7 = ServoThread Type8
+	E0 = PortE Pin 0
+	M1 = Mode 0=off 1=on 	only value is used
+	V0 = PV index 				only value is used
+	S25.5 = SP 						only value used
+
+
+Digital Pin data format "#S2,A6M1B0I0P0U1Z0"
+	S2 = ServoThread Type 2
+	A6 = PortA Pin 6
+	M1 = Mode 1=input 0=output, 					only value is used
+	B0 = Data bit, 												only value is used
+	I0 = Invert 1=inverted 0=normal, 			only value is used
+	P0 = Output type 0=PUSH_PULL 1=OPEN_DRAIN, 			only value is used
+	U1 = PullUp/Down 0=none 1=pull-up 2=pull-down, 	only value is used
+	Z2 = Speed 0=low 1=medium 2=fast 3=high, 				only value is used 
+
+SerialPort on Port A9:A10
+ TX: A9
+ RX: A10
+
+SPI1 on Port A4:A7
+ SPI1_NSS:  PA4
+ SPI1_SCK:  PA5
+ SPI1_MiSO: PA6
+ SPI1_MOSI: PA7
+
+At power up or reset, system will hang arround at "2. Load Configuration"
+it will wait for special character '$' the data must be sent along with it
+stringed together or per function followed by carriage return (ENTER on serial terminal) (0x0D)
+
+e.g.
+--Configure 3 joints on Port C0:C8, blinker on Port E0, reset on Port C15, eStop on Port C12
+$#B13,C0C1C2,C3C4C5,C6C7C8#S8,E0F4#S3,C15#S0,C12
+
+--Configure 3 joints on Port C0:C8, blinker on Port E0, reset on Port C15
+$#B13,C0C1C2,C3C4C5,C6C7C8#S8,E0F4#S3,C15
+
+--Configure just one function, blinker at PortE pin 0
+$#S8,E0F4
+
+--Configure more blinker at once, 
+$#S8,E0F4#S8,C0F2,#S8,C6F10
+
+
+
+There is no error checking (yet) done on the data,
+the data format has to be followed. The data string is up to 128 characters
+including the special characters as long as it's a complete format
+The plan is to use a gui to send configuration
+(I'm hoping data can be made sure to be correct before sending)
+All parameters with "only value is used", any character can be used as long as it's A to Z
+   
+I have tested it with Rpi4 2GB LinuxCNC 2.8.2, STM32F407vg with
+Remora-XYZ config with AXIS gui and the splash nc file
+
+First time pressing the eStop button will say it's running
+then suddenly will reset and go idle (I'm not sure yet why).
+The second time pressing the eStop button should stay in Running state.
+Then the splash nc file can be run.
+
+Hope to get more skilled coder improve my very obvious amateur work and make it stable for all.
+
+
+Library used is https://github.com/andysworkshop/stm32plus with a few mods.
+Unfortunately the library supported a limited series of STM32F4 microcontrollers
+due to an older stdperipheral library used.
+
+***This is an Eclipse project with GCC-Arm plugins (not STM32CUBE),
+hopefully I can learn enough make or scons or cmake
+to make this easy to build without IDE or somebody do it ;-)
+
+keep having fun, and don't forget to share :-)
+(c) 2021 mhel marcelo jaqueza@gmx.com
