@@ -21,6 +21,7 @@
  */
 
 #include "config/stm32plus.h"
+#include "config/spi.h"
 #include "utils/wd.h"
 #include "drivers/dmaspi.h"
 #include "drivers/serialcom.h"
@@ -38,6 +39,8 @@
 typedef Usart1<Usart1InterruptFeature> SerialPort_t;
 SerialCom<SerialPort_t> *_serial;
 
+/* SPI1 with default pin assignment */
+typedef Spi1<> SpiPeripheral_t;
 
 // state machine
 enum State {
@@ -64,7 +67,7 @@ bool threadsRunning = false;
 PRUThread<ServoThreadTimer_t> *servoThread;
 PRUThread<BaseThreadTimer_t> *baseThread;
 // DMA Controller
-SPIDma *_spiDma;
+SPIDma<SpiPeripheral_t> *_spiDma;
 
 volatile rxData_t rxData;
 volatile txData_t txData;
@@ -115,7 +118,20 @@ void spiRxCompleteCallback(volatile rxData_t *rx) {
 
 
 void DMAsetup() {
-  _spiDma = new SPIDma(&txData, &rxData, &spiRxCompleteCallback);
+
+  SpiPeripheral_t::Parameters params;
+  /* Set the default parameters */
+  params.spi_direction = SPI_Direction_2Lines_FullDuplex;
+  params.spi_mode = SPI_Mode_Slave;
+  params.spi_dataSize = SPI_DataSize_8b;
+  params.spi_cpol = SPI_CPOL_Low; /* SCLK polarity and phase MUST be the same as the Master for this to work */
+  params.spi_cpha = SPI_CPHA_1Edge;
+  params.spi_baudRatePrescaler = SPI_BaudRatePrescaler_2; /* Not needed in slave mode ??? */
+  params.spi_firstBit = SPI_FirstBit_MSB;
+  params.spi_polynomial = 7; /* CRC? */
+
+  _spiDma = new SPIDma<SpiPeripheral_t>(&txData, &rxData, &spiRxCompleteCallback, params);
+
   _spiDma->init();
 }
 

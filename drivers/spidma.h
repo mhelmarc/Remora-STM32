@@ -28,9 +28,6 @@ using namespace stm32plus;
 #define StreamCopier1TransferComplete Dma2Stream7InterruptFeature::COMPLETE
 //#define StreamCopier2TransferComplete Dma2Stream0InterruptFeature::COMPLETE
 
-/* We'll use SPI1 with DMA */
-typedef Spi1<> SPI_t;
-
 /* SPI1 transmit is on DMA2 Channel 3 Stream 3 */
 typedef Spi1TxDmaChannel<
     Spi1TxDmaChannelInterruptFeature, /* We'll use interrupt */
