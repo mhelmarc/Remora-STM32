@@ -92,11 +92,11 @@ void SPIDma::init(void) {
   _spi_rxdma.beginRead(const_cast<uint8_t*>(_RxBuffer->rx.buffer),
       BUFFER_SIZE);
 
-  // FIXME this should not be here
-  // FIFO error can only be cleared after calls to begin write/read
-  DMA_ClearITPendingBit(DMA2_Stream3, DMA_IT_FEIF3);
-
   enableDmaInterrupts();
+
+  /* Clearing fifo error is always been available :-) */
+  _spi_txdma.clearErrorFlag();
+  _spi_rxdma.clearErrorFlag();
 }
 
 /* Can't seem to step thru the register to check for DMAEN bit
