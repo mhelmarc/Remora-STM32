@@ -102,8 +102,6 @@ void SPIDma::init(void) {
 /* Can't seem to step thru the register to check for DMAEN bit
  * it always stay at 0, but the interrupt still fires and works ok
  * so it's good.
- * I'm perflexed, how did this worked before when I was copying the
- * whole struct instead of just the buffers?
  */
 void SPIDma::enableStreamCopier(volatile rxData_t *src) {
   _stream_copier1.beginCopyMemory(const_cast<uint8_t*>(_rxData->rx.buffer), const_cast<uint8_t*>(src->rx.buffer),
