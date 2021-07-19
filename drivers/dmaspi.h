@@ -223,14 +223,15 @@ void SPIDma<TSpi>::onDmaRxInterrupt(DmaEventType ev) {
 
   if (ev == DmaEventType::EVENT_COMPLETE) {
     /* call the function in main */
-      _spi_DmaRxInterruptCallback(_RxBuffer);
+    _spi_DmaRxInterruptCallback(_RxBuffer);
 
     /* Interrupts automatically disables the streams
      * it is re-initialized when beginread()is called ,
      */
-    if (_spi_rxdma.isComplete()) {
-      _spi_rxdma.beginRead(const_cast<uint8_t*>(_RxBuffer->rx.buffer), BUFFER_SIZE);
-    }
+    /* No need to check if transfer completed, we got here because the transfer completed */
+    _spi_rxdma.clearCompleteFlag();
+    _spi_rxdma.beginRead(const_cast<uint8_t*>(_RxBuffer->rx.buffer),
+        BUFFER_SIZE);
   }
 }
 
@@ -240,9 +241,10 @@ template<typename TSpi>
 void SPIDma<TSpi>::onDmaTxInterrupt(DmaEventType ev) {
 
   if (ev == DmaEventType::EVENT_COMPLETE) {
-    if (_spi_txdma.isComplete()) {
-      _spi_txdma.beginWrite(const_cast<uint8_t*>(_txData->tx.buffer), BUFFER_SIZE);
-    }
+    /* No need to check if transfer completed, we got here because the transfer completed */
+    _spi_txdma.clearCompleteFlag();
+    _spi_txdma.beginWrite(const_cast<uint8_t*>(_txData->tx.buffer),
+        BUFFER_SIZE);
   }
 }
 
@@ -251,9 +253,9 @@ void SPIDma<TSpi>::onDmaTxInterrupt(DmaEventType ev) {
 template<typename TSpi>
 void SPIDma<TSpi>::onDmaStreamCopier1Interrupt(DmaEventType ev) {
   if (ev == DmaEventType::EVENT_COMPLETE) {
-    if (_stream_copier1.isComplete()) {
-      isCopyComplete = true;
-    }
+    /* No need to check if transfer completed, we got here because the transfer completed */
+    _stream_copier1.clearCompleteFlag();
+    isCopyComplete = true;
   }
 }
 
